@@ -1,7 +1,9 @@
 """
 Titanic Data App — FastAPI backend + self-contained JS frontend.
-Keboola entrypoint (set in pyproject.toml):
-    uvicorn app:app --host 0.0.0.0 --port 8080
+
+- Started by supervisord from `keboola-config/supervisord/app.conf`, not from `pyproject.toml`.
+- Listens on 127.0.0.1:8050; nginx publishes it on 8888, the port the platform probes.
+- Reads the first CSV under `$KBC_DATADIR/in/tables` and raises if there is none.
 """
 import os, math, json
 import pandas as pd
