@@ -4,3 +4,7 @@ __pycache__/
 .venv/
 *.egg-info/
 dist/
+
+# Deliberately not committed: the runtime image chooses the interpreter, so the resolution
+# must happen at install time and pick releases that ship wheels for it.
+uv.lock

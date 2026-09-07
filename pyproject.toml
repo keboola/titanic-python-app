@@ -2,14 +2,25 @@
 name            = "titanic-js-data-app"
 version         = "1.0.0"
 description     = "Titanic Data App — FastAPI + vanilla JS"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
+# Floors, not pins.
+#
+# - The runtime image picks the interpreter, not this file — Keboola offers several
+#   `data-app-python-js` variants and they differ in Python version.
+# - A pinned release stops shipping wheels for interpreters newer than itself, and uv then
+#   compiles it from source on every cold start. `pandas==2.2.2` on CPython 3.13 costs
+#   ~5.5 CPU-minutes that way.
+# - No upper caps: a breaking major surfaces as a real deploy failure, which is what this
+#   app exists to catch. A cap would instead silently hold the app on a release that has
+#   no wheel for the next interpreter.
 dependencies = [
-    "fastapi==0.111.0",
-    "uvicorn[standard]==0.30.1",
-    "pandas==2.2.2",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "pandas>=2.2.3",
 ]
 
-[build-system]
-requires      = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
+# The app is run as `uvicorn app:app` from /app, never imported as an installed package, so
+# there is nothing to build. Without this uv builds a wheel out of /app on every boot.
+[tool.uv]
+package = false
