@@ -5,7 +5,7 @@ Titanic Data App — FastAPI backend + self-contained JS frontend.
 - Listens on 127.0.0.1:8050; nginx publishes it on 8888, the port the platform probes.
 - Reads the first CSV under `$KBC_DATADIR/in/tables` and raises if there is none.
 """
-import os, math, json
+import os, math, json, platform
 import pandas as pd
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -66,12 +66,24 @@ def _port_col(df):
 
 @app.get("/api/health")
 def health():
+    """
+    Liveness probe. Also the keboola/ui E2E suite's proof that this container is serving.
+
+    - `python` names the interpreter, so a caller can tell which runtime variant answered.
+      The variants differ only in Python and Node version, and nothing else in the response
+      distinguishes them.
+    - 503 on a data failure: the app cannot do its job without the mounted CSV, and a health
+      endpoint that reports `status: error` under a 200 is not a health endpoint.
+    - `DATA_DIR` is the only input, so it is the only thing worth reporting back.
+    """
+    runtime = {"python": platform.python_version(), "pandas": pd.__version__}
     try:
-        return {"status": "ok", "rows": len(get_df())}
+        return {"status": "ok", "rows": len(get_df()), **runtime}
     except Exception as e:
-        return {"status": "error", "error": str(e),
-                "kbc_token_set": bool(KBC_TOKEN),
-                "table_id": TABLE_ID or "(not set)"}
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "error": str(e), "data_dir": DATA_DIR, **runtime},
+        )
 
 @app.get("/api/stats")
 def stats():
